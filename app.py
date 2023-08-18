@@ -16,7 +16,12 @@ analysis_name = app.node.try_get_context("analysis")
 study = import_module(f"barrel.studies.{study_name}")
 analysis = study.analyses[analysis_name]
 
-configuration = Configuration(study=study_name, analysis=analysis_name)
+configuration = Configuration(
+    study=study_name,
+    analysis=analysis_name,
+    file_system_type=analysis.infrastructure.file_system_type,
+    file_system_mount_point=analysis.infrastructure.file_system_mount_point,
+)
 
 
 def to_pascal_case(identifier):

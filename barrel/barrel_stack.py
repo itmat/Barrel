@@ -3,10 +3,14 @@ import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
 
 import aws_cdk.aws_batch_alpha as batch
+import aws_cdk.aws_efs as efs
+
+import barrel.utilities as utilities
 
 from constructs import Construct
 
 from barrel.configuration import Configuration
+
 
 class BarrelStack(cdk.Stack):
     def __init__(
@@ -29,6 +33,29 @@ class BarrelStack(cdk.Stack):
             ],
         )
 
+        availability_zone, *_ = vpc.availability_zones
+        subnet, *_ = vpc.public_subnets
+
+        # File system
+
+        file_system_type = configuration.file_system_type
+        file_system_mount_point = configuration.file_system_mount_point
+
+        if file_system_type is efs.FileSystem:
+            file_system = efs.FileSystem(
+                self,
+                "ElasticFileSystem",
+                vpc=vpc,
+                performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
+                lifecycle_policy=efs.LifecyclePolicy.AFTER_1_DAY,
+                out_of_infrequent_access_policy=efs.OutOfInfrequentAccessPolicy.AFTER_1_ACCESS,
+                removal_policy=cdk.RemovalPolicy.DESTROY,
+            )
+
+            utilities.set_availability_zone(file_system, availability_zone)
+
+        # Computation system
+
         compute_environment = batch.ManagedEc2EcsComputeEnvironment(
             self,
             "ComputeEnvironment",
@@ -41,6 +68,8 @@ class BarrelStack(cdk.Stack):
             maxv_cpus=768,
         )
 
+        file_system.connections.allow_default_port_from(compute_environment)
+
         job_queue = batch.JobQueue(
             self,
             "JobQueue",
@@ -50,6 +79,8 @@ class BarrelStack(cdk.Stack):
                 ),
             ],
         )
+
+        # Worker job definition
 
         worker = batch.EcsJobDefinition(
             self,
@@ -64,6 +95,17 @@ class BarrelStack(cdk.Stack):
                 memory=cdk.Size.mebibytes(512),
             ),
         )
+
+        if file_system_type is efs.FileSystem:
+            worker.container.add_volume(
+                batch.EfsVolume(
+                    name="Volume",
+                    file_system=file_system,
+                    container_path=str(file_system_mount_point),
+                    readonly=False,
+                    enable_transit_encryption=True,
+                )
+            )
 
         cdk.CfnOutput(
             self,
