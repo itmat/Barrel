@@ -10,6 +10,7 @@ import barrel.utilities as utilities
 from constructs import Construct
 
 from barrel.configuration import Configuration
+from barrel.workstation import Workstation
 
 
 class BarrelStack(cdk.Stack):
@@ -106,6 +107,20 @@ class BarrelStack(cdk.Stack):
                     enable_transit_encryption=True,
                 )
             )
+
+        # Workstation
+
+        workstation = Workstation(
+            self,
+            "Workstation",
+            vpc=vpc,
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T3, ec2.InstanceSize.SMALL
+            ),
+            block_device_volume_size=128,
+            file_system=file_system,
+            file_system_mount_point=file_system_mount_point,
+        )
 
         cdk.CfnOutput(
             self,

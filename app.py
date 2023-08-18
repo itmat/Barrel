@@ -28,7 +28,13 @@ def to_pascal_case(identifier):
     return string.capwords(identifier, sep="_").replace("_", "")
 
 
-stage = cdk.Stage(app, to_pascal_case(configuration.study))
+stage = cdk.Stage(
+    app,
+    to_pascal_case(configuration.study),
+    env=cdk.Environment(
+        account=analysis.infrastructure.account, region=analysis.infrastructure.region
+    ),
+)
 BarrelStack(stage, "BarrelStack", configuration=configuration)
 
 app.synth()
