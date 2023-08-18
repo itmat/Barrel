@@ -6,9 +6,16 @@ import aws_cdk.aws_batch_alpha as batch
 
 from constructs import Construct
 
+from barrel.configuration import Configuration
 
 class BarrelStack(cdk.Stack):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        configuration: Configuration,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         vpc = ec2.Vpc(

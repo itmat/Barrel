@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
-import os
+import string
 
 import aws_cdk as cdk
 
-from barrel.barrel_stack import BarrelStack
+from importlib import import_module
 
+from barrel.barrel_stack import BarrelStack
+from barrel.configuration import Configuration
 
 app = cdk.App()
-BarrelStack(app, "BarrelStack",
-    # If you don't specify 'env', this stack will be environment-agnostic.
-    # Account/Region-dependent features and context lookups will not work,
-    # but a single synthesized template can be deployed anywhere.
 
-    # Uncomment the next line to specialize this stack for the AWS Account
-    # and Region that are implied by the current CLI configuration.
+study_name = app.node.try_get_context("study")
+analysis_name = app.node.try_get_context("analysis")
 
-    #env=cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+study = import_module(f"barrel.studies.{study_name}")
+analysis = study.analyses[analysis_name]
 
-    # Uncomment the next line if you know exactly what Account and Region you
-    # want to deploy the stack to. */
+configuration = Configuration(study=study_name, analysis=analysis_name)
 
-    #env=cdk.Environment(account='123456789012', region='us-east-1'),
 
-    # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-    )
+def to_pascal_case(identifier):
+    return string.capwords(identifier, sep="_").replace("_", "")
+
+
+stage = cdk.Stage(app, to_pascal_case(configuration.study))
+BarrelStack(stage, "BarrelStack", configuration=configuration)
 
 app.synth()
