@@ -6,6 +6,7 @@ import aws_cdk.aws_efs as efs
 
 from pathlib import Path
 
+from aws_cdk.aws_ecr_assets import DockerImageAsset
 from constructs import Construct
 
 from ..utilities.file_system import mount
@@ -68,3 +69,17 @@ class Workstation(Construct):
 
         file_system.connections.allow_default_port_from(self.instance)
         mount(file_system, self.instance, file_system_mount_point)
+
+        # Setup container
+
+        image = DockerImageAsset(self, "Image", directory="barrel/workstation")
+        image.repository.grant_pull(self.instance)
+
+        run_container_command = f"""
+            yum install -y docker
+            systemctl start docker
+            aws ecr get-login-password --region {scope.region} | docker login --username AWS --password-stdin {scope.account}.dkr.ecr.{scope.region}.{scope.url_suffix}
+            docker run -d --mount source={file_system_mount_point},target={file_system_mount_point},type=bind --mount source=/home,target=/home,type=bind {image.image_uri}
+        """
+
+        self.instance.add_user_data(run_container_command)
