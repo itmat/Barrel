@@ -21,6 +21,7 @@
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "containerUser": "vscode",
+  "containerEnv": { "TZ": "America/New_York" },
   "mounts": [],
   "postCreateCommand": "bash ~/setup.sh"
 }

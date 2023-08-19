@@ -103,6 +103,7 @@ class Workstation(Construct):
 
             docker run --detach --init                                                                                  \
                 --mount source={file_system_mount_point},target={file_system_mount_point},type=bind                     \
+                --env TZ={os.environ["TZ"]}                                                                             \
                 {image.image_uri}
         """
 
