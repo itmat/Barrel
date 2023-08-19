@@ -1,6 +1,8 @@
 import json
+import os
 import requests
 
+import aws_cdk as cdk
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_efs as efs
 
@@ -11,6 +13,8 @@ from constructs import Construct
 
 from barrel.configuration import User
 from barrel.utilities.file_system import mount
+
+SSH_PORT = 2222
 
 
 class Workstation(Construct):
@@ -88,6 +92,7 @@ class Workstation(Construct):
                         {
                             "id": user.id,
                             "name": user.name,
+                            "key": user.key.public.read_text(),
                         }
                         for user in users
                     ]
@@ -103,9 +108,20 @@ class Workstation(Construct):
 
             docker run --detach --init                                                                                  \
                 --mount source={file_system_mount_point},target={file_system_mount_point},type=bind                     \
+                --publish {SSH_PORT}:22                                                                                 \
                 --env TZ={os.environ["TZ"]}                                                                             \
                 {image.image_uri}
         """
 
         self.instance.add_user_data(run_container_command)
+
+        security_group = ec2.SecurityGroup(self, "SecurityGroup", vpc=vpc)
+
+        for user in users:
+            for cidr_block in user.cidr_blocks:
+                security_group.add_ingress_rule(
+                    ec2.Peer.ipv4(cidr_block), ec2.Port.tcp(SSH_PORT)
+                )
+
+        self.instance.add_security_group(security_group)
         self.instance.add_user_data("usermod --append --groups docker ec2-user")

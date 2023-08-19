@@ -1,15 +1,54 @@
+import atexit
 import os
+import requests
 
 import aws_cdk.aws_efs as efs
 
 from dataclasses import dataclass, field
+from paramiko import RSAKey
 from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import Optional
+
+
+@dataclass
+class Key:
+    public: Path
+    private: Optional[Path] = None
 
 
 @dataclass
 class User:
     id: int
     name: str
+    key: Key = None
+    cidr_blocks: list[str] = None
+
+    def __post_init__(self):
+        if not self.key:
+            self.key = Key(
+                Path.home() / ".ssh" / f"{self.name}.pub",
+                Path.home() / ".ssh" / self.name,
+            )
+
+            if not self.key.public.exists() and not self.key.private.exists():
+                key = RSAKey.generate(4096)
+                key.write_private_key_file(self.key.private)
+                self.key.public.write_text(f"{key.get_name()} {key.get_base64()}")
+
+            elif not self.key.public.exists() and self.key.private.exists():
+                key = RSAKey.from_private_key_file(self.key.private)
+                self.key.public = Path(NamedTemporaryFile(suffix=".pub").name)
+                self.key.public.write_text(f"{key.get_name()} {key.get_base64()}")
+
+                atexit.register(lambda: self.key.public.unlink())
+
+            elif self.key.public.exists() and not self.key.private.exists():
+                self.key.private = None
+
+        if not self.cidr_blocks:
+            ip_address = requests.get("https://checkip.amazonaws.com").text.strip()
+            self.cidr_blocks = [f"{ip_address}/32"]
 
 
 @dataclass
