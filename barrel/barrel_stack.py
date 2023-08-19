@@ -120,6 +120,7 @@ class BarrelStack(cdk.Stack):
             block_device_volume_size=128,
             file_system=file_system,
             file_system_mount_point=file_system_mount_point,
+            users=configuration.users,
         )
 
         cdk.CfnOutput(

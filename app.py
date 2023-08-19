@@ -21,6 +21,7 @@ configuration = Configuration(
     analysis=analysis_name,
     file_system_type=analysis.infrastructure.file_system_type,
     file_system_mount_point=analysis.infrastructure.file_system_mount_point,
+    users=analysis.infrastructure.users,
 )
 
 

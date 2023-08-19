@@ -9,7 +9,8 @@ from pathlib import Path
 from aws_cdk.aws_ecr_assets import DockerImageAsset
 from constructs import Construct
 
-from ..utilities.file_system import mount
+from barrel.configuration import User
+from barrel.utilities.file_system import mount
 
 
 class Workstation(Construct):
@@ -17,6 +18,7 @@ class Workstation(Construct):
         self,
         scope: Construct,
         construct_id: str,
+        users: list[User],
         vpc: ec2.Vpc,
         instance_type: ec2.InstanceType,
         block_device_volume_size: int,
@@ -65,21 +67,44 @@ class Workstation(Construct):
 
         self.instance.add_user_data("yum install -y ec2-instance-connect")
 
-        # Connect the file system
+        # File system
 
         file_system.connections.allow_default_port_from(self.instance)
         mount(file_system, self.instance, file_system_mount_point)
 
-        # Setup container
+        # Container
 
-        image = DockerImageAsset(self, "Image", directory="barrel/workstation")
+        self.instance.add_user_data(
+            "yum install -y docker", "systemctl start docker", "groupadd docker"
+        )
+
+        image = DockerImageAsset(
+            self,
+            "Image",
+            directory="barrel/workstation/container",
+            build_args={
+                "USERS": json.dumps(
+                    [
+                        {
+                            "id": user.id,
+                            "name": user.name,
+                        }
+                        for user in users
+                    ]
+                )
+            },
+        )
+
         image.repository.grant_pull(self.instance)
 
         run_container_command = f"""
-            yum install -y docker
-            systemctl start docker
-            aws ecr get-login-password --region {scope.region} | docker login --username AWS --password-stdin {scope.account}.dkr.ecr.{scope.region}.{scope.url_suffix}
-            docker run -d --mount source={file_system_mount_point},target={file_system_mount_point},type=bind --mount source=/home,target=/home,type=bind {image.image_uri}
+            aws ecr get-login-password --region {scope.region} |                                                        \
+            docker login --username AWS --password-stdin {scope.account}.dkr.ecr.{scope.region}.{scope.url_suffix}
+
+            docker run --detach --init                                                                                  \
+                --mount source={file_system_mount_point},target={file_system_mount_point},type=bind                     \
+                {image.image_uri}
         """
 
         self.instance.add_user_data(run_container_command)
+        self.instance.add_user_data("usermod --append --groups docker ec2-user")
