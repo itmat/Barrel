@@ -146,7 +146,12 @@ class BarrelStack(cdk.Stack):
             ],
         )
 
+        grant_list_jobs = iam.PolicyStatement(
+            effect=iam.Effect.ALLOW, actions=["batch:ListJobs"], resources=["*"]
+        )
+
         worker.container.job_role.add_to_principal_policy(grant_submit_job)
+        worker.container.job_role.add_to_principal_policy(grant_list_jobs)
 
         # Workstation
 

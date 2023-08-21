@@ -11,4 +11,6 @@ build-backend = "hatchling.build"
 sources = ["src"]
 
 [project.scripts]
+bsub = "lsf:bsub"
+bjobs = "lsf:bjobs"
 worker = "worker:main"
