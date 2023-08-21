@@ -32,8 +32,9 @@ fi
 
 npm install
 
-sudo pip install -r requirements-dev.txt
-sudo pip install -r requirements.txt
+sudo pip install --requirement requirements-dev.txt
+sudo pip install --requirement requirements.txt
+sudo pip install --editable barrel/worker
 
 echo 'export PATH=$PATH:'$PWD'/node_modules/aws-cdk/bin' >> ~/.bashrc
 echo 'export PYTHONDONTWRITEBYTECODE=1' >> ~/.bashrc

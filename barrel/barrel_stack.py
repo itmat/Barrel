@@ -89,17 +89,25 @@ class BarrelStack(cdk.Stack):
 
         # Worker job definition
 
+        worker_job_definition_name = f"{cdk.Names.unique_id(self)}WorkerDefinition"
+
         worker = batch.EcsJobDefinition(
             self,
             "Worker",
             container=batch.EcsEc2ContainerDefinition(
                 self,
                 "WorkerContainer",
-                image=ecs.ContainerImage.from_registry(
-                    "python:latest",
+                image=ecs.ContainerImage.from_asset(
+                    directory="barrel/worker",
                 ),
                 environment={
+                    "STUDY_NAME": configuration.study,
+                    "ANALYSIS_NAME": configuration.analysis,
+                    "AWS_DEFAULT_REGION": self.region,
+                    "JOB_QUEUE_ARN": job_queue.job_queue_arn,
+                    "WORKER_JOB_DEFINITION_NAME": worker_job_definition_name,
                     "BUCKET_NAME": bucket.bucket_name,
+                    "FILE_SYSTEM_MOUNT_POINT": str(file_system_mount_point),
                 },
                 job_role=iam.Role(
                     self,
@@ -109,6 +117,7 @@ class BarrelStack(cdk.Stack):
                 cpu=1,
                 memory=cdk.Size.mebibytes(512),
             ),
+            job_definition_name=worker_job_definition_name,
         )
 
         if file_system_type is efs.FileSystem:
@@ -123,6 +132,21 @@ class BarrelStack(cdk.Stack):
             )
 
         bucket.grant_read(worker.container.job_role)
+
+        grant_submit_job = iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            actions=["batch:SubmitJob"],
+            resources=[
+                job_queue.job_queue_arn,
+                self.format_arn(
+                    service="batch",
+                    resource="job-definition",
+                    resource_name=worker_job_definition_name,
+                ),
+            ],
+        )
+
+        worker.container.job_role.add_to_principal_policy(grant_submit_job)
 
         # Workstation
 

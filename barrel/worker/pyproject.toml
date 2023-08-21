@@ -1,0 +1,14 @@
+[project]
+name = "worker"
+version = "0.0.1"
+dependencies = ["boto3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[project.scripts]
+worker = "worker:main"
