@@ -4,6 +4,7 @@ import worker
 from pathlib import Path
 
 from bioinformatics.data import Read, Sample
+from bioinformatics.genome import Genome, Species
 
 # Set the main directory for the analysis
 
@@ -12,6 +13,12 @@ analysis_directory = Path(
 )
 
 worker.logs_directory = analysis_directory / "logs"
+
+# Genome
+
+genome = Genome(
+    Species.MUS_MUSCULUS, "GRCm38", release="102", location=analysis_directory / "genome"
+)
 
 # Samples
 
