@@ -5,7 +5,7 @@ from pathlib import Path
 
 from bioinformatics.data import Read, Sample
 from bioinformatics.genome import Genome, Species
-from bioinformatics.software import FASTQC, STAR
+from bioinformatics.software import FASTQC, STAR, PORT, SAMTOOLS, SAM2COV
 
 # Set the main directory for the analysis
 
@@ -21,6 +21,9 @@ software_directory = analysis_directory / "software"
 
 fastqc = FASTQC("0.12.1", software_directory / "FastQC-0.12.1")
 star = STAR("2.7.10b", software_directory / "STAR-2.7.10b")
+port = PORT("0.8.5f-beta_hotfix1", software_directory / "PORT-v0.8.5f-beta_hotfix1")
+samtools = SAMTOOLS("1.18", software_directory / "samtools-1.18")
+sam2cov = SAM2COV("0.0.5.4-beta", software_directory / "sam2cov-v0.0.5.4-beta")
 
 # Genome
 
@@ -67,3 +70,15 @@ for sample in samples:
         sample, analysis_directory / "alignment" / f"{sample.id}_Aligned.out.sam"
     )
 
+# Normalize
+
+port.normalize(
+    samples,
+    genome,
+    sam2cov=sam2cov,
+    samtools=samtools,
+    location=analysis_directory / "normalization",
+    # second_part=True,
+    # cutoff=3,
+    # resume=True
+)
