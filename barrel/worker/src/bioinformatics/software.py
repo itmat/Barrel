@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from worker import wait
 
-from bioinformatics.data import Sample
+from bioinformatics.data import Read, Sample
 from bioinformatics.genome import Genome
 
 
@@ -41,6 +41,31 @@ class Program(ABC):
 
         name = type(self).__name__
         return worker.execute(command, job_name=f"INSTALL_{name}", vcpu=8, memory=16000)
+
+
+class FASTQC(Program):
+    @property
+    def install_command(self):
+        return f"""
+            wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v{self.version}.zip
+            unzip fastqc_v{self.version}.zip -d {self.location}
+            mv {self.location}/FastQC/* {self.location}; rmdir {self.location}/FastQC
+            chmod a+x {self.location}/fastqc
+        """
+
+    @property
+    def executable(self):
+        return Path(f"{self.location}/fastqc")
+
+    def analyze(self, read: Read, output_directory: Path):
+        if not Path(
+            f"{output_directory}/{read.location.name.removesuffix(''.join(read.location.suffixes))}_fastqc.zip"
+        ).exists():
+            worker.execute(
+                f"mkdir -p {output_directory}; {self.executable} -o {output_directory} {read.location}",
+                job_name="QUALITY_ANALYSIS",
+                depends_on=[self.installation, read.download],
+            )
 
 
 class STAR(Program):

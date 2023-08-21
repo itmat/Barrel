@@ -5,7 +5,7 @@ from pathlib import Path
 
 from bioinformatics.data import Read, Sample
 from bioinformatics.genome import Genome, Species
-from bioinformatics.software import STAR
+from bioinformatics.software import FASTQC, STAR
 
 # Set the main directory for the analysis
 
@@ -19,6 +19,7 @@ worker.logs_directory = analysis_directory / "logs"
 
 software_directory = analysis_directory / "software"
 
+fastqc = FASTQC("0.12.1", software_directory / "FastQC-0.12.1")
 star = STAR("2.7.10b", software_directory / "STAR-2.7.10b")
 
 # Genome
@@ -52,6 +53,9 @@ for sample_id, sample_name in sample_information.items():
         source=f"{fastq_files_source_directory}/{sample_id}_2.fastq.gz",
         location=analysis_directory / "fastq" / f"{sample_name}_2.fastq.gz",
     )
+
+    fastqc.analyze(forward_read, analysis_directory / "qc")
+    fastqc.analyze(reverse_read, analysis_directory / "qc")
 
     sample = Sample(id=sample_name, reads=[forward_read, reverse_read])
     samples.append(sample)
