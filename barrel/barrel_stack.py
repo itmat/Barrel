@@ -1,6 +1,8 @@
 import aws_cdk as cdk
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
+import aws_cdk.aws_iam as iam
+import aws_cdk.aws_s3 as s3
 
 import aws_cdk.aws_batch_alpha as batch
 import aws_cdk.aws_efs as efs
@@ -22,6 +24,13 @@ class BarrelStack(cdk.Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        if configuration.bucket.name:
+            bucket = s3.Bucket.from_bucket_name(
+                self, "Bucket", configuration.bucket.name
+            )
+        else:
+            bucket = s3.Bucket(self, "Bucket", **configuration.bucket.properties)
 
         vpc = ec2.Vpc(
             self,
@@ -92,6 +101,14 @@ class BarrelStack(cdk.Stack):
                 image=ecs.ContainerImage.from_registry(
                     "python:latest",
                 ),
+                environment={
+                    "BUCKET_NAME": bucket.bucket_name,
+                },
+                job_role=iam.Role(
+                    self,
+                    "WorkerRole",
+                    assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+                ),
                 cpu=1,
                 memory=cdk.Size.mebibytes(512),
             ),
@@ -107,6 +124,8 @@ class BarrelStack(cdk.Stack):
                     enable_transit_encryption=True,
                 )
             )
+
+        bucket.grant_read(worker.container.job_role)
 
         # Workstation
 

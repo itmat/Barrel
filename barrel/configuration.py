@@ -2,7 +2,9 @@ import atexit
 import os
 import requests
 
+import aws_cdk as cdk
 import aws_cdk.aws_efs as efs
+import aws_cdk.aws_s3 as s3
 
 from dataclasses import dataclass, field
 from paramiko import RSAKey
@@ -52,7 +54,23 @@ class User:
 
 
 @dataclass
+class Bucket:
+    name: Optional[str] = None
+    properties: Optional[dict] = None
+
+    def __post_init__(self):
+        if not self.name and not self.properties:
+            self.properties = dict(
+                block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+                encryption=s3.BucketEncryption.S3_MANAGED,
+                auto_delete_objects=True,
+                removal_policy=cdk.RemovalPolicy.DESTROY,
+            )
+
+
+@dataclass
 class Infrastructure:
+    bucket: Bucket
     file_system_type: type[efs.FileSystem]
     file_system_mount_point: Path
     users: list[User] = field(default_factory=list)
