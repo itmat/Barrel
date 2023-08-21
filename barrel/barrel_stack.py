@@ -91,6 +91,19 @@ class BarrelStack(cdk.Stack):
 
         worker_job_definition_name = f"{cdk.Names.unique_id(self)}WorkerDefinition"
 
+        worker_environment = {
+            "STUDY_NAME": configuration.study,
+            "ANALYSIS_NAME": configuration.analysis,
+            "AWS_DEFAULT_REGION": self.region,
+            "JOB_QUEUE_ARN": job_queue.job_queue_arn,
+            "WORKER_JOB_DEFINITION_NAME": worker_job_definition_name,
+            "BUCKET_NAME": bucket.bucket_name,
+            "FILE_SYSTEM_MOUNT_POINT": str(file_system_mount_point),
+        }
+
+        if configuration.bucket.prefix:
+            worker_environment["BUCKET_PREFIX"] = configuration.bucket.prefix
+
         worker = batch.EcsJobDefinition(
             self,
             "Worker",
@@ -102,15 +115,7 @@ class BarrelStack(cdk.Stack):
                     file="worker/Dockerfile",
                     build_args={"STUDY_NAME": configuration.study},
                 ),
-                environment={
-                    "STUDY_NAME": configuration.study,
-                    "ANALYSIS_NAME": configuration.analysis,
-                    "AWS_DEFAULT_REGION": self.region,
-                    "JOB_QUEUE_ARN": job_queue.job_queue_arn,
-                    "WORKER_JOB_DEFINITION_NAME": worker_job_definition_name,
-                    "BUCKET_NAME": bucket.bucket_name,
-                    "FILE_SYSTEM_MOUNT_POINT": str(file_system_mount_point),
-                },
+                environment=worker_environment,
                 job_role=iam.Role(
                     self,
                     "WorkerRole",
@@ -133,7 +138,12 @@ class BarrelStack(cdk.Stack):
                 )
             )
 
-        bucket.grant_read(worker.container.job_role)
+        if configuration.bucket.prefix:
+            bucket.grant_read(
+                worker.container.job_role, f"{configuration.bucket.prefix}/*"
+            )
+        else:
+            bucket.grant_read(worker.container.job_role)
 
         grant_submit_job = iam.PolicyStatement(
             effect=iam.Effect.ALLOW,

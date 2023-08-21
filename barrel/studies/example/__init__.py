@@ -5,7 +5,7 @@ from pathlib import Path
 from barrel.configuration import Analysis, Bucket, FileSystem, Infrastructure, User
 
 infrastructure = Infrastructure(
-    bucket=Bucket(name="itmat-bioinformatics-test-data"),
+    bucket=Bucket(name="itmat-bioinformatics-test-data", prefix="example"),
     file_system=FileSystem(type=efs.FileSystem),
     users=[User(id=1000, name="ec2-user")],
 )

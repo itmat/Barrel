@@ -56,6 +56,7 @@ class User:
 @dataclass
 class Bucket:
     name: Optional[str] = None
+    prefix: str = None
     properties: Optional[dict] = None
 
     def __post_init__(self):
