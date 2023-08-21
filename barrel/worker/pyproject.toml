@@ -13,4 +13,5 @@ sources = ["src"]
 [project.scripts]
 bsub = "lsf:bsub"
 bjobs = "lsf:bjobs"
+transfer = "transfer:main"
 worker = "worker:main"
