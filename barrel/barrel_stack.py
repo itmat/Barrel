@@ -48,18 +48,15 @@ class BarrelStack(cdk.Stack):
 
         # File system
 
-        file_system_type = configuration.file_system_type
-        file_system_mount_point = configuration.file_system_mount_point
+        file_system_type = configuration.file_system.type
+        file_system_mount_point = configuration.file_system.mount_point
 
         if file_system_type is efs.FileSystem:
             file_system = efs.FileSystem(
                 self,
                 "ElasticFileSystem",
                 vpc=vpc,
-                performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
-                lifecycle_policy=efs.LifecyclePolicy.AFTER_1_DAY,
-                out_of_infrequent_access_policy=efs.OutOfInfrequentAccessPolicy.AFTER_1_ACCESS,
-                removal_policy=cdk.RemovalPolicy.DESTROY,
+                **configuration.file_system.properties,
             )
 
             utilities.set_availability_zone(file_system, availability_zone)

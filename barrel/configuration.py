@@ -69,10 +69,25 @@ class Bucket:
 
 
 @dataclass
+class FileSystem:
+    type: type[efs.FileSystem]
+    mount_point: Path = "/mnt/fs"
+    properties: Optional[dict] = None
+
+    def __post_init__(self):
+        if not self.properties:
+            self.properties = dict(
+                performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
+                lifecycle_policy=efs.LifecyclePolicy.AFTER_1_DAY,
+                out_of_infrequent_access_policy=efs.OutOfInfrequentAccessPolicy.AFTER_1_ACCESS,
+                removal_policy=cdk.RemovalPolicy.DESTROY,
+            )
+
+
+@dataclass
 class Infrastructure:
     bucket: Bucket
-    file_system_type: type[efs.FileSystem]
-    file_system_mount_point: Path
+    file_system: FileSystem
     users: list[User] = field(default_factory=list)
     account: str = os.getenv("CDK_DEFAULT_ACCOUNT")
     region: str = os.getenv("CDK_DEFAULT_REGION")

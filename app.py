@@ -20,8 +20,7 @@ configuration = Configuration(
     study=study_name,
     analysis=analysis_name,
     bucket=analysis.infrastructure.bucket,
-    file_system_type=analysis.infrastructure.file_system_type,
-    file_system_mount_point=analysis.infrastructure.file_system_mount_point,
+    file_system=analysis.infrastructure.file_system,
     users=analysis.infrastructure.users,
 )
 
