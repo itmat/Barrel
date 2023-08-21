@@ -9,3 +9,7 @@ WORKDIR /root
 COPY worker worker
 
 RUN pip install ./worker && rm --recursive worker
+
+ARG STUDY_NAME
+
+COPY studies/${STUDY_NAME} ${STUDY_NAME}

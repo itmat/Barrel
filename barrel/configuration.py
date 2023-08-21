@@ -96,9 +96,11 @@ class Infrastructure:
 @dataclass
 class Analysis:
     infrastructure: Infrastructure
+    pipeline: Path
 
 
 @dataclass
 class Configuration(Infrastructure):
     study: str = None
     analysis: str = None
+    pipeline: Path = None

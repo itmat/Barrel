@@ -19,6 +19,7 @@ analysis = study.analyses[analysis_name]
 configuration = Configuration(
     study=study_name,
     analysis=analysis_name,
+    pipeline=analysis.pipeline,
     bucket=analysis.infrastructure.bucket,
     file_system=analysis.infrastructure.file_system,
     users=analysis.infrastructure.users,

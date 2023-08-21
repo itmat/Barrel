@@ -13,5 +13,6 @@ infrastructure = Infrastructure(
 analyses = {
     "analysis": Analysis(
         infrastructure=infrastructure,
+        pipeline="pipeline.py",
     )
 }

@@ -98,7 +98,9 @@ class BarrelStack(cdk.Stack):
                 self,
                 "WorkerContainer",
                 image=ecs.ContainerImage.from_asset(
-                    directory="barrel/worker",
+                    directory="barrel",
+                    file="worker/Dockerfile",
+                    build_args={"STUDY_NAME": configuration.study},
                 ),
                 environment={
                     "STUDY_NAME": configuration.study,
@@ -170,6 +172,12 @@ class BarrelStack(cdk.Stack):
 
         cdk.CfnOutput(
             self,
-            "SubmitJobCommand",
-            value=f"aws batch submit-job --job-name barrel --job-queue {job_queue.job_queue_arn} --job-definition {worker.job_definition_arn}",
+            "StartPipelineCommand",
+            value=f"""
+                aws batch submit-job                                                                                \
+                    --job-name PIPELINE                                                                             \
+                    --job-queue {job_queue.job_queue_arn}                                                           \
+                    --job-definition {worker_job_definition_name}                                                   \
+                    --container-override command='["python3", "{configuration.study}/{configuration.pipeline}"]'
+            """,
         )
