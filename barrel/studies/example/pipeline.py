@@ -5,6 +5,7 @@ from pathlib import Path
 
 from bioinformatics.data import Read, Sample
 from bioinformatics.genome import Genome, Species
+from bioinformatics.software import STAR
 
 # Set the main directory for the analysis
 
@@ -14,11 +15,19 @@ analysis_directory = Path(
 
 worker.logs_directory = analysis_directory / "logs"
 
+# Software
+
+software_directory = analysis_directory / "software"
+
+star = STAR("2.7.10b", software_directory / "STAR-2.7.10b")
+
 # Genome
 
 genome = Genome(
     Species.MUS_MUSCULUS, "GRCm38", release="102", location=analysis_directory / "genome"
 )
+
+star.create_index(genome)
 
 # Samples
 
@@ -46,4 +55,11 @@ for sample_id, sample_name in sample_information.items():
 
     sample = Sample(id=sample_name, reads=[forward_read, reverse_read])
     samples.append(sample)
+
+# Align
+
+for sample in samples:
+    star.align(
+        sample, analysis_directory / "alignment" / f"{sample.id}_Aligned.out.sam"
+    )
 
