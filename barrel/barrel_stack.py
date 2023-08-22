@@ -32,6 +32,11 @@ class BarrelStack(cdk.Stack):
         else:
             bucket = s3.Bucket(self, "Bucket", **configuration.bucket.properties)
 
+        if configuration.bucket.access_via_ftp_server:
+            utilities.configure_access_via_ftp(
+                bucket, configuration.users, configuration.bucket.prefix
+            )
+
         vpc = ec2.Vpc(
             self,
             "Vpc",

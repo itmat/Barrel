@@ -57,6 +57,7 @@ class User:
 class Bucket:
     name: Optional[str] = None
     prefix: str = None
+    access_via_ftp_server: bool = False
     properties: Optional[dict] = None
 
     def __post_init__(self):
