@@ -5,6 +5,7 @@ import requests
 import aws_cdk as cdk
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_efs as efs
+import aws_cdk.aws_fsx as fsx
 
 from pathlib import Path
 
@@ -26,7 +27,7 @@ class Workstation(Construct):
         vpc: ec2.Vpc,
         instance_type: ec2.InstanceType,
         block_device_volume_size: int,
-        file_system: efs.FileSystem,
+        file_system: efs.FileSystem | fsx.LustreFileSystem,
         file_system_mount_point: Path,
         **kwargs,
     ):

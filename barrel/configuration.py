@@ -4,6 +4,7 @@ import requests
 
 import aws_cdk as cdk
 import aws_cdk.aws_efs as efs
+import aws_cdk.aws_fsx as fsx
 import aws_cdk.aws_s3 as s3
 
 from dataclasses import dataclass, field
@@ -71,19 +72,37 @@ class Bucket:
 
 
 @dataclass
+class Link:
+    file_system_path: Path
+    bucket_prefix: str
+    read_only: bool = True
+
+
+@dataclass
 class FileSystem:
-    type: type[efs.FileSystem]
+    type: type[efs.FileSystem] | type[fsx.LustreFileSystem]
     mount_point: Path = "/mnt/fs"
     properties: Optional[dict] = None
+    links: list[Link] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.properties:
-            self.properties = dict(
-                performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
-                lifecycle_policy=efs.LifecyclePolicy.AFTER_1_DAY,
-                out_of_infrequent_access_policy=efs.OutOfInfrequentAccessPolicy.AFTER_1_ACCESS,
-                removal_policy=cdk.RemovalPolicy.DESTROY,
-            )
+            if self.type is efs.FileSystem:
+                self.properties = dict(
+                    performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
+                    lifecycle_policy=efs.LifecyclePolicy.AFTER_1_DAY,
+                    out_of_infrequent_access_policy=efs.OutOfInfrequentAccessPolicy.AFTER_1_ACCESS,
+                    removal_policy=cdk.RemovalPolicy.DESTROY,
+                )
+
+            if self.type is fsx.LustreFileSystem:
+                self.properties = dict(
+                    storage_capacity_gib=1200,
+                    removal_policy=cdk.RemovalPolicy.DESTROY,
+                    lustre_configuration=dict(
+                        deployment_type=fsx.LustreDeploymentType.SCRATCH_2,
+                    ),
+                )
 
 
 @dataclass

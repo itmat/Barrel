@@ -1,11 +1,12 @@
 import aws_cdk as cdk
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
+import aws_cdk.aws_efs as efs
+import aws_cdk.aws_fsx as fsx
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_s3 as s3
 
 import aws_cdk.aws_batch_alpha as batch
-import aws_cdk.aws_efs as efs
 
 import barrel.utilities as utilities
 
@@ -66,6 +67,20 @@ class BarrelStack(cdk.Stack):
 
             utilities.set_availability_zone(file_system, availability_zone)
 
+        if file_system_type is fsx.LustreFileSystem:
+            file_system = fsx.LustreFileSystem(
+                self,
+                "LustreFileSystem",
+                vpc=vpc,
+                vpc_subnet=subnet,
+                **configuration.file_system.properties,
+            )
+
+            utilities.set_version(file_system, version="2.12")
+
+            for link in configuration.file_system.links:
+                utilities.establish(link, file_system, bucket)
+
         # Computation system
 
         compute_environment = batch.ManagedEc2EcsComputeEnvironment(
@@ -78,6 +93,9 @@ class BarrelStack(cdk.Stack):
                 ec2.InstanceClass.R6A,
             ],
             maxv_cpus=768,
+            launch_template=utilities.mount_template(
+                file_system, file_system_mount_point
+            ),
         )
 
         file_system.connections.allow_default_port_from(compute_environment)
@@ -140,6 +158,16 @@ class BarrelStack(cdk.Stack):
                     container_path=str(file_system_mount_point),
                     readonly=False,
                     enable_transit_encryption=True,
+                )
+            )
+
+        if file_system_type is fsx.LustreFileSystem:
+            worker.container.add_volume(
+                batch.HostVolume(
+                    name="Volume",
+                    host_path=str(file_system_mount_point),
+                    container_path=str(file_system_mount_point),
+                    readonly=False,
                 )
             )
 

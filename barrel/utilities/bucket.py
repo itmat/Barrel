@@ -3,6 +3,8 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_transfer as transfer
 
+import boto3
+
 from typing import Optional
 
 from barrel.configuration import User
@@ -65,3 +67,8 @@ def configure_access_via_ftp(
         "FtpServerEndpoint",
         value=f"{ftp_server.attr_server_id}.server.transfer.{stack.region}.{stack.url_suffix}",
     )
+
+
+def get_region(bucket: s3.IBucket):
+    bucket_location = boto3.client("s3").get_bucket_location(Bucket=bucket.bucket_name)
+    return bucket_location["LocationConstraint"]

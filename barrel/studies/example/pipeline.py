@@ -39,6 +39,10 @@ fastq_files_source_directory = (
     f"s3://{os.environ['BUCKET_NAME']}/{os.environ['BUCKET_PREFIX']}/fastq/0.1%"
 )
 
+# fastq_files_source_directory = (
+#     f"file://{os.environ['FILE_SYSTEM_MOUNT_POINT']}/data/fastq/0.1%"
+# )
+
 controls = {f"W{i+1}": f"Control{i+1}" for i in range(6)}
 treatments = {f"K{i+1}": f"Treatment{i+1}" for i in range(6)}
 
