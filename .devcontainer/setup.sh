@@ -10,8 +10,7 @@ ln -s $SSH_DIRECTORY ~/.ssh
 ln -s $AWS_DIRECTORY ~/.aws
 
 if [ ! -d $SSH_DIRECTORY ]; then
-    mkdir $SSH_DIRECTORY
-    ssh-keygen -q -t rsa -b 4096 -N "" -f $SSH_DIRECTORY/key
+    mkdir -m 700 $SSH_DIRECTORY
 fi
 
 if [ ! -d $AWS_DIRECTORY ]; then
@@ -19,8 +18,8 @@ if [ ! -d $AWS_DIRECTORY ]; then
     read -p "AWS Secret Access Key (input will not be echoed): " -s AWS_SECRET_ACCESS_KEY; echo
     read -p "Default region name: " DEFAULT_REGION_NAME
 
-    mkdir $AWS_DIRECTORY
-    
+    mkdir -m 700 $AWS_DIRECTORY
+
     echo "[default]"                                        >  $AWS_DIRECTORY/credentials
     echo "aws_access_key_id=$AWS_ACCESS_KEY_ID"             >> $AWS_DIRECTORY/credentials
     echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY"     >> $AWS_DIRECTORY/credentials
