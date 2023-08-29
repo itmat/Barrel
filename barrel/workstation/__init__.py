@@ -126,3 +126,13 @@ class Workstation(Construct):
 
         self.instance.add_security_group(security_group)
         self.instance.add_user_data("usermod --append --groups docker ec2-user")
+
+        cdk.CfnOutput(
+            scope,
+            "WorkstationConnectionCommands",
+            value="\n".join(
+                f"ssh -i {user.key.private} -p {SSH_PORT} {user.name}@{self.instance.instance_public_dns_name}"
+                for user in users
+                if user.key.private
+            ),
+        )
